@@ -2,6 +2,7 @@
   "name": "@scroogieboy/directory-to-object-cli",
   "version": "0.1.0",
   "exports": "./cli.ts",
+  "license": "MIT",
   "tasks": {
     "check": "deno check *.ts",
     "fmt": "deno fmt *.ts *.md",
@@ -13,5 +14,8 @@
     "@std/jsonc": "jsr:@std/jsonc@^1.0.1",
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/yaml": "jsr:@std/yaml@^1.0.5"
+  },
+  "publish": {
+    "include": ["README.md", "LICENSE", "cli.ts"]
   }
 }
