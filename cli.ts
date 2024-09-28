@@ -4,11 +4,12 @@ if (!import.meta.main) {
 
 import { Command } from "@cliffy/command";
 import { toFileUrl } from "@std/path";
+import * as JSONC from "@std/jsonc";
 import * as YAML from "@std/yaml";
 import {
   type DirectoryObjectLoader,
+  fileValueLoaders,
   newBinaryFileValueLoader,
-  newDefaultFileValueLoaders,
   newDirectoryObjectLoader,
   newFileBinaryReader,
   newFileTextReader,
@@ -22,42 +23,64 @@ const command = new Command()
   .description("A CLI for the '@scroogieboy/directory-to-object' package")
   .option(
     "-n, --nodefaults",
-    "Remove all default file value loaders",
+    "Remove all default file value loaders.",
   )
   .option(
     "-b, --binary <extension:string>",
-    "Map additional file extension to binary format",
+    "Map additional file extension to binary format.",
     { collect: true },
   )
   .option(
+    "-c, --colors",
+    "Colorize Deno.inspect output.",
+  )
+  .option(
+    "-f, --format <format:string>",
+    "the output format -- 'inspect' (default) or 'json'.",
+    (value: string): string => {
+      if (!["inspect", "json"].includes(value)) {
+        throw new Error(
+          `Format must be one of "inspect" or "json", but got "${value}".`,
+        );
+      }
+      return value;
+    },
+  )
+  .option(
     "-j, --json <extension:string>",
-    "Map additional file extension to JSON format",
+    "Map additional file extension to JSON format.",
+    { collect: true },
+  )
+  .option(
+    "-J, --jsonc <extension:string>",
+    "Map additional file extension to JSON-with-comments (JSONC) format.",
     { collect: true },
   )
   .option(
     "-t, --text <extension:string>",
-    "Map additional file extension to textual format",
+    "Map additional file extension to textual format.",
     { collect: true },
+  )
+  .option(
+    "-o, --output <path:string>",
+    "Write output to this file."
   )
   .option(
     "-v, --verbose",
-    "Enable verbose logging",
+    "Enable verbose logging.",
   )
   .option(
     "-y, --yaml <extension:string>",
-    "Map additional file extension to YAML format",
+    "Map additional file extension to YAML format.",
     { collect: true },
   )
-  .arguments("<File...>");
+  .arguments("<path>");
 
 const parsedCommand = await command.parse();
 
 const verbose = !!parsedCommand.options.verbose;
 
 const textReader = newFileTextReader();
-
-// TODO: use the variable from @scroogieboy/directory-to-object
-const fileValueLoaders = newDefaultFileValueLoaders();
 
 if (parsedCommand.options.nodefaults) {
   fileValueLoaders.clear();
@@ -76,6 +99,18 @@ if (parsedCommand.options.json) {
 
   for (const extension of parsedCommand.options.json) {
     fileValueLoaders.set(extension, jsonLoader);
+  }
+}
+
+if (parsedCommand.options.jsonc) {
+  const jsoncLoader = newStringParserFileValueLoader(
+    textReader,
+    JSONC.parse,
+    "JSONC file value loader",
+  );
+
+  for (const extension of parsedCommand.options.jsonc) {
+    fileValueLoaders.set(extension, jsoncLoader);
   }
 }
 
@@ -117,18 +152,38 @@ try {
   Deno.exit(2);
 }
 
-for (const path of parsedCommand.args) {
-  const directoryUrl = new URL(
-    toFileUrl(await Deno.realPath(path)),
-  );
+const path = parsedCommand.args[0];
+const directoryUrl = new URL(
+  toFileUrl(await Deno.realPath(path)),
+);
 
-  const contents = await directoryObjectLoader.loadObjectFromDirectory(
-    directoryUrl,
-  );
+const contents = await directoryObjectLoader.loadObjectFromDirectory(
+  directoryUrl,
+);
 
-  if (verbose) {
-    console.log();
-    console.log(`${directoryUrl.href}:`);
-    console.log(JSON.stringify(contents, null, 2));
+if (verbose) {
+  console.log();
+  console.log(`${directoryUrl.href}:`);
+}
+
+let output: string;
+
+switch (parsedCommand.options.format) {
+  case "json":
+    output = JSON.stringify(contents, null, 2);
+    break;
+
+  default: {
+    const inspectOptions: Deno.InspectOptions = {
+      colors: !!parsedCommand.options.colors,
+    };
+
+    output = Deno.inspect(contents, inspectOptions);
   }
+}
+
+if (parsedCommand.options.output) {
+  await Deno.writeTextFile(parsedCommand.options.output, output);
+} else {
+  console.log(output);
 }
