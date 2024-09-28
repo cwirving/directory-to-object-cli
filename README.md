@@ -13,7 +13,7 @@ intended for Deno only.
 Run it from the Deno command line with:
 
 ```
-deno run --allow-read --allow-write jsr:directory-to-object-cli
+deno run --allow-read --allow-write jsr:@scroogieboy/directory-to-object-cli
 ```
 
 Note: The `--allow-write` option is only required if using the `--output` flag
@@ -22,7 +22,7 @@ to write the command output to a file.
 It can also be installed as a global command with:
 
 ```
-deno install --allow-read --allow-write --name directory-to-object-cli jsr:directory-to-object-cli
+deno install --allow-read --allow-write --name directory-to-object-cli jsr:@scroogieboy/directory-to-object-cli
 ```
 
 ## Usage
