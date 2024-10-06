@@ -8,6 +8,7 @@ import * as JSONC from "@std/jsonc";
 import * as YAML from "@std/yaml";
 import {
   type DirectoryObjectLoader,
+  type DirectoryObjectLoaderOptions,
   fileValueLoaders,
   newBinaryFileValueLoader,
   newDirectoryObjectLoader,
@@ -17,6 +18,7 @@ import {
   newStringParserFileValueLoader,
   newTextFileValueLoader,
 } from "@scroogieboy/directory-to-object";
+import { merge, union } from "@es-toolkit/es-toolkit";
 
 const command = new Command()
   .name("directory-to-object-cli")
@@ -57,13 +59,21 @@ const command = new Command()
     { collect: true },
   )
   .option(
-    "-t, --text <extension:string>",
-    "Map additional file extension to textual format.",
-    { collect: true },
+    "-M, --merge-arrays",
+    "Merge any conflicting arrays in configuration using the es-toolkit `union` function.",
+  )
+  .option(
+    "-m, --merge-objects",
+    "Merge any conflicting objects in configuration using the es-toolkit `merge` function.",
   )
   .option(
     "-o, --output <path:string>",
-    "Write output to this file."
+    "Write output to this file.",
+  )
+  .option(
+    "-t, --text <extension:string>",
+    "Map additional file extension to textual format.",
+    { collect: true },
   )
   .option(
     "-v, --verbose",
@@ -134,6 +144,14 @@ if (parsedCommand.options.yaml) {
   }
 }
 
+const options: DirectoryObjectLoaderOptions = {};
+if (parsedCommand.options.mergeArrays) {
+  options.arrayMergeFunction = union;
+}
+if (parsedCommand.options.mergeObjects) {
+  options.objectMergeFunction = merge;
+}
+
 if (verbose) {
   console.log("Using the following loaders, by extension:");
   for (const [extension, loader] of fileValueLoaders) {
@@ -143,7 +161,12 @@ if (verbose) {
 
 let directoryObjectLoader: DirectoryObjectLoader;
 try {
-  directoryObjectLoader = newDirectoryObjectLoader(fileValueLoaders);
+  directoryObjectLoader = newDirectoryObjectLoader(
+    fileValueLoaders,
+    undefined,
+    "directory loader",
+    options,
+  );
 } catch (e) {
   console.error();
   if (e instanceof Error) {

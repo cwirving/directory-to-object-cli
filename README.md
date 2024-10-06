@@ -36,15 +36,19 @@ Description:
 
 Options:
 
-  -h, --help                     - Show this help.
-  -n, --nodefaults               - Remove all default file value loaders.
-  -b, --binary      <extension>  - Map additional file extension to binary format.
-  -c, --colors                   - Colorize Deno.inspect output.
-  -f, --format      <format>     - the output format -- 'inspect' (default) or 'json'.
-  -j, --json        <extension>  - Map additional file extension to JSON format.
-  -J, --jsonc       <extension>  - Map additional file extension to JSON-with-comments (JSONC) format.
-  -t, --text        <extension>  - Map additional file extension to textual format.
-  -o, --output      <path>       - Write output to this file.
-  -v, --verbose                  - Enable verbose logging.
-  -y, --yaml        <extension>  - Map additional file extension to YAML format.
+  -h, --help                         - Show this help.
+  -n, --nodefaults                   - Remove all default file value loaders.
+  -b, --binary          <extension>  - Map additional file extension to binary format.
+  -c, --colors                       - Colorize Deno.inspect output.
+  -f, --format          <format>     - the output format -- 'inspect' (default) or 'json'.
+  -j, --json            <extension>  - Map additional file extension to JSON format.
+  -J, --jsonc           <extension>  - Map additional file extension to JSON-with-comments (JSONC) format.
+  -M, --merge-arrays                 - Merge any conflicting arrays in configuration using the es-toolkit `union`
+                                       function.
+  -m, --merge-objects                - Merge any conflicting objects in configuration using the es-toolkit `merge`
+                                       function.
+  -o, --output          <path>       - Write output to this file.
+  -t, --text            <extension>  - Map additional file extension to textual format.
+  -v, --verbose                      - Enable verbose logging.
+  -y, --yaml            <extension>  - Map additional file extension to YAML format.
 ```

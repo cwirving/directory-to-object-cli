@@ -1,6 +1,6 @@
 {
   "name": "@scroogieboy/directory-to-object-cli",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "exports": "./cli.ts",
   "license": "MIT",
   "tasks": {
@@ -10,7 +10,8 @@
   },
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.5",
-    "@scroogieboy/directory-to-object": "jsr:@scroogieboy/directory-to-object@^0.3.0",
+    "@es-toolkit/es-toolkit": "jsr:@es-toolkit/es-toolkit@^1.23.0",
+    "@scroogieboy/directory-to-object": "jsr:@scroogieboy/directory-to-object@^0.4.0",
     "@std/jsonc": "jsr:@std/jsonc@^1.0.1",
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/yaml": "jsr:@std/yaml@^1.0.5"
