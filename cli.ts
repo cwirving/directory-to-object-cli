@@ -12,8 +12,7 @@ import {
   fileValueLoaders,
   newBinaryFileValueLoader,
   newDirectoryObjectLoader,
-  newFileBinaryReader,
-  newFileTextReader,
+  newFileReader,
   newJsonFileValueLoader,
   newStringParserFileValueLoader,
   newTextFileValueLoader,
@@ -37,8 +36,16 @@ const command = new Command()
     "Colorize Deno.inspect output.",
   )
   .option(
+    "-e, --embed-dir <key:string>",
+    "Embed the URL of every directory traversed using this key.",
+  )
+  .option(
+    "-E, --embed-file <key:string>",
+    "Embed the URL of every object-valued (e.g., JSON) file traversed using this key.",
+  )
+  .option(
     "-f, --format <format:string>",
-    "the output format -- 'inspect' (default) or 'json'.",
+    "The output format -- 'inspect' (default) or 'json'.",
     (value: string): string => {
       if (!["inspect", "json"].includes(value)) {
         throw new Error(
@@ -90,14 +97,14 @@ const parsedCommand = await command.parse();
 
 const verbose = !!parsedCommand.options.verbose;
 
-const textReader = newFileTextReader();
+const textReader = newFileReader();
 
 if (parsedCommand.options.nodefaults) {
   fileValueLoaders.clear();
 }
 
 if (parsedCommand.options.binary) {
-  const binaryLoader = newBinaryFileValueLoader(newFileBinaryReader());
+  const binaryLoader = newBinaryFileValueLoader(newFileReader());
 
   for (const extension of parsedCommand.options.binary) {
     fileValueLoaders.set(extension, binaryLoader);
@@ -145,11 +152,21 @@ if (parsedCommand.options.yaml) {
 }
 
 const options: DirectoryObjectLoaderOptions = {};
+
 if (parsedCommand.options.mergeArrays) {
   options.arrayMergeFunction = union;
 }
+
 if (parsedCommand.options.mergeObjects) {
   options.objectMergeFunction = merge;
+}
+
+if (parsedCommand.options.embedDir) {
+  options.embedDirectoryUrlAs = parsedCommand.options.embedDir;
+}
+
+if (parsedCommand.options.embedFile) {
+  options.embedFileUrlAs = parsedCommand.options.embedFile;
 }
 
 if (verbose) {
