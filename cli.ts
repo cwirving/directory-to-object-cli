@@ -7,17 +7,12 @@ import { toFileUrl } from "@std/path";
 import * as JSONC from "@std/jsonc";
 import * as YAML from "@std/yaml";
 import {
-  type DirectoryObjectLoader,
-  type DirectoryObjectLoaderOptions,
-  fileValueLoaders,
-  newBinaryFileValueLoader,
-  newDirectoryObjectLoader,
-  newFileReader,
-  newJsonFileValueLoader,
-  newStringParserFileValueLoader,
-  newTextFileValueLoader,
+  defaultLoaders,
+  Loaders,
+  loadObjectFromDirectory,
 } from "@scroogieboy/directory-to-object";
 import { merge, union } from "@es-toolkit/es-toolkit";
+import type { ValueLoaderOptions } from "@scroogieboy/directory-to-object/interfaces";
 
 const command = new Command()
   .name("directory-to-object-cli")
@@ -97,61 +92,43 @@ const parsedCommand = await command.parse();
 
 const verbose = !!parsedCommand.options.verbose;
 
-const textReader = newFileReader();
-
 if (parsedCommand.options.nodefaults) {
-  fileValueLoaders.clear();
+  defaultLoaders.length = 0;
 }
 
 if (parsedCommand.options.binary) {
-  const binaryLoader = newBinaryFileValueLoader(newFileReader());
-
-  for (const extension of parsedCommand.options.binary) {
-    fileValueLoaders.set(extension, binaryLoader);
-  }
+  defaultLoaders.push(
+    Loaders.binaryFile().whenExtensionIsOneOf(parsedCommand.options.binary),
+  );
 }
 
 if (parsedCommand.options.json) {
-  const jsonLoader = newJsonFileValueLoader(textReader);
-
-  for (const extension of parsedCommand.options.json) {
-    fileValueLoaders.set(extension, jsonLoader);
-  }
+  defaultLoaders.push(
+    Loaders.jsonFile().whenExtensionIsOneOf(parsedCommand.options.json),
+  );
 }
 
 if (parsedCommand.options.jsonc) {
-  const jsoncLoader = newStringParserFileValueLoader(
-    textReader,
-    JSONC.parse,
-    "JSONC file value loader",
+  defaultLoaders.push(
+    Loaders.customFile({ name: "JSONC file value loader", parser: JSONC.parse })
+      .whenExtensionIsOneOf(parsedCommand.options.jsonc),
   );
-
-  for (const extension of parsedCommand.options.jsonc) {
-    fileValueLoaders.set(extension, jsoncLoader);
-  }
 }
 
 if (parsedCommand.options.text) {
-  const textLoader = newTextFileValueLoader(textReader);
-
-  for (const extension of parsedCommand.options.text) {
-    fileValueLoaders.set(extension, textLoader);
-  }
+  defaultLoaders.push(
+    Loaders.textFile().whenExtensionIsOneOf(parsedCommand.options.text),
+  );
 }
 
 if (parsedCommand.options.yaml) {
-  const yamlLoader = newStringParserFileValueLoader(
-    textReader,
-    YAML.parse,
-    "YAML file value loader",
+  defaultLoaders.push(
+    Loaders.customFile({ name: "YAML file value loader", parser: YAML.parse })
+      .whenExtensionIsOneOf(parsedCommand.options.yaml),
   );
-
-  for (const extension of parsedCommand.options.yaml) {
-    fileValueLoaders.set(extension, yamlLoader);
-  }
 }
 
-const options: DirectoryObjectLoaderOptions = {};
+const options: ValueLoaderOptions = {};
 
 if (parsedCommand.options.mergeArrays) {
   options.arrayMergeFunction = union;
@@ -170,26 +147,10 @@ if (parsedCommand.options.embedFile) {
 }
 
 if (verbose) {
-  console.log("Using the following loaders, by extension:");
-  for (const [extension, loader] of fileValueLoaders) {
-    console.log(`${extension}: ${loader.name}`);
+  console.log("Using the following loaders:");
+  for (const loader of defaultLoaders) {
+    console.log(loader.name);
   }
-}
-
-let directoryObjectLoader: DirectoryObjectLoader;
-try {
-  directoryObjectLoader = newDirectoryObjectLoader(
-    fileValueLoaders,
-    undefined,
-    "directory loader",
-    options,
-  );
-} catch (e) {
-  console.error();
-  if (e instanceof Error) {
-    console.error(e.message);
-  }
-  Deno.exit(2);
 }
 
 const path = parsedCommand.args[0];
@@ -197,8 +158,9 @@ const directoryUrl = new URL(
   toFileUrl(await Deno.realPath(path)),
 );
 
-const contents = await directoryObjectLoader.loadObjectFromDirectory(
+const contents = await loadObjectFromDirectory(
   directoryUrl,
+  options,
 );
 
 if (verbose) {
