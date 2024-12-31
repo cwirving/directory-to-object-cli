@@ -3,6 +3,7 @@ if (!import.meta.main) {
 }
 
 import { Command } from "@cliffy/command";
+import { parse as parseXml } from "@libs/xml";
 import { toFileUrl } from "@std/path";
 import * as JSONC from "@std/jsonc";
 import * as YAML from "@std/yaml";
@@ -11,6 +12,7 @@ import {
   Loaders,
   loadObjectFromDirectory,
 } from "@scroogieboy/directory-to-object";
+import { zipReader } from "@scroogieboy/zip-to-object";
 import { merge, union } from "@es-toolkit/es-toolkit";
 import type { ValueLoaderOptions } from "@scroogieboy/directory-to-object/interfaces";
 
@@ -82,9 +84,18 @@ const command = new Command()
     "Enable verbose logging.",
   )
   .option(
+    "-x, --xml <extension:string>",
+    "Map additional file extension to XML format.",
+    { collect: true },
+  )
+  .option(
     "-y, --yaml <extension:string>",
     "Map additional file extension to YAML format.",
     { collect: true },
+  )
+  .option(
+    "-Z, --from-zip",
+    "Load contents from a zip archive instead of a directory.",
   )
   .arguments("<path>");
 
@@ -128,6 +139,15 @@ if (parsedCommand.options.yaml) {
   );
 }
 
+if (parsedCommand.options.xml) {
+  defaultLoaders.push(
+    Loaders.customFile({
+      name: "XML file value loader",
+      parser: parseXml,
+    }).whenExtensionIsOneOf(parsedCommand.options.xml),
+  );
+}
+
 const options: ValueLoaderOptions = {};
 
 if (parsedCommand.options.mergeArrays) {
@@ -144,6 +164,10 @@ if (parsedCommand.options.embedDir) {
 
 if (parsedCommand.options.embedFile) {
   options.embedFileUrlAs = parsedCommand.options.embedFile;
+}
+
+if (parsedCommand.options.fromZip) {
+  options.fileSystemReader = zipReader;
 }
 
 if (verbose) {

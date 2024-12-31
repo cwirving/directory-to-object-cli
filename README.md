@@ -1,11 +1,14 @@
 # directory-to-object-cli
 
 A simple CLI tool to exercise the
-[directory-to-object](https://jsr.io/@scroogieboy/directory-to-object) package.
+[directory-to-object](https://jsr.io/@scroogieboy/directory-to-object) and
+[zip-to-object](https://jsr.io/@scroogieboy/zip-to-object) packages.
 
 This tool loads a directory using `@scroogieboy/directory-to-object` then prints
 the results. The default output format is the `Deno.inspect` format. The default
-output location is the console.
+output location is the console. When the `--from-zip` command line option is
+specified, the contents will be read from a Zip archive (or file that uses the
+Zip archive format, such as Microsoft Office document) instead of a directory.
 
 The underlying package is portable across runtimes, but this particular CLI is
 intended for Deno only.
@@ -52,5 +55,7 @@ Options:
   -o, --output         <path>       - Write output to this file.
   -t, --text           <extension>  - Map additional file extension to textual format.
   -v, --verbose                     - Enable verbose logging.
+  -x, --xml            <extension>  - Map additional file extension to XML format.
   -y, --yaml           <extension>  - Map additional file extension to YAML format.
+  -Z, --from-zip                    - Load contents from a zip archive instead of a directory.
 ```
